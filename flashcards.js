@@ -45,8 +45,8 @@ class Controller {
 
       rl.setPrompt(`${question} > `);rl.prompt();
       rl.on('line', (input) => {
-        input = input.toLowerCase()
-        let answer =  questions[order].term.toLowerCase()
+        input = input.toLowerCase().trim()
+        let answer =  questions[order].term.toLowerCase().trim()
         if (input == 'skip') {
           view.skip()
           let skipQuestion = questions.shift()
@@ -86,9 +86,9 @@ class View {
 
   rules() {
     console.log(`--------------------------------------------------------------\n`);
-    console.log(`You can guess 3 times in one game, more than that.. game over`);
-    console.log(`If you can guess all cards, You win`);
-    console.log(`You can skip card you dont know, just write 'skip'\n`);
+    console.log(`  You can guess 3 times in one game, more than that.. game over`);
+    console.log(`  If you can guess all cards, You win`);
+    console.log(`  You can skip card you dont know, just write 'skip'\n        `);
     console.log(`________________________LET's BEGIN__________________________\n`);
 
   }
