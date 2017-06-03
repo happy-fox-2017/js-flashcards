@@ -10,21 +10,13 @@ const rl = readline.createInterface({
 })
 
 class Model {
-  constructor(data) {
-    this.data = data
-  }
-}
-
-class Controller {
-  constructor() {
-    this.model = new Model()
-    this.view = new View()
+  constructor(deck=`social`) {
+    this.deck = deck
   }
 
-
-  start() {
+  getData() {
     return new Promise((resolve, reject) => {
-      let query = `SELECT * FROM social`
+      let query = `SELECT * FROM ${this.deck}`
       db.all(query, (error, rows) => {
         if (!error) {
           return resolve(rows)
@@ -34,9 +26,57 @@ class Controller {
       })
     })
   }
+}
+
+class Controller {
+  constructor(deck='social') {
+    this.deck = deck
+  }
 
   run() {
+    let deck = this.deck
+    let view = new View()
+    let model = new Model(deck)
+    model.getData().then(questions => {
+      view.rules()
+      let order = 0
+      let guess = 0
+      let question = questions[order].definition
 
+      rl.setPrompt(`${question} > `);rl.prompt();
+      rl.on('line', (input) => {
+        input = input.toLowerCase()
+        let answer =  questions[order].term.toLowerCase()
+        if (input == 'skip') {
+          view.skip()
+          let skipQuestion = questions.shift()
+          questions.push(skipQuestion)
+          question = questions[order].definition
+          rl.setPrompt(`${question} > `)
+          rl.prompt();
+        } else if (input !== `${answer}`) {
+          guess++
+          view.wrongAnswer(guess)
+          if (guess === 3) {
+            view.gameOver()
+            rl.close()
+          }
+          rl.prompt()
+        } else {
+          questions.splice(order,1)
+          view.rightAnswer()
+          if (questions.length === 0) {
+            view.win()
+            rl.close()
+          }
+          question = questions[order].definition
+          rl.setPrompt(`${question} > `)
+          rl.prompt();
+        }
+      }).on('close',function(){
+          process.exit(0);
+      });
+    })
   }
 
 }
@@ -45,50 +85,47 @@ class View {
   constructor() {}
 
   rules() {
+    console.log(`--------------------------------------------------------------\n`);
     console.log(`You can guess 3 times in one game, more than that.. game over`);
     console.log(`If you can guess all cards, You win`);
-    console.log(`You can skip card you dont know`);
+    console.log(`You can skip card you dont know, just write 'skip'\n`);
+    console.log(`________________________LET's BEGIN__________________________\n`);
+
+  }
+  rightAnswer() {
+    console.log(`\n`);
+    console.log(`it's correct, awesome !`);
+    console.log(`\n`);
+  }
+
+  wrongAnswer(guess) {
+    console.log(`\n`);
+    console.log(`Tetott , wrong answer !`);
+    console.log(`You have ${3-guess} chances to go`);
+    console.log(`\n`);
+  }
+  skip() {
+    console.log(`\n`);
+    console.log(`Skipped`);
+    console.log(`next question`);
+    console.log(`\n`);
+  }
+  win() {
+    console.log(`&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&`);
+    console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`);
+    console.log(`                    You WIN !                           `);
+    console.log(`                  All hail User                         `);
+    console.log(`~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`);
+    console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`);
+  }
+  gameOver() {
+    console.log(`******************************************************`)
+    console.log(`                     GAME OVER                        `);
+    console.log(`                     YOU DIED                         `);
+    console.log(`>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<>_<`);
   }
 }
 
-let control = new Controller()
-let model
-let i = 0
-let guess = 0
-control.start().then(rows => {
-  let question = rows[i].definition
-  rl.setPrompt(`${question} > `);
-  rl.prompt();
-  rl.on('line', function(line) {
-    let answer =  rows[i].term
-    if (line == 'skip') {
-     let skipQuestion = rows.shift()
-     rows.push(skipQuestion)
-     question = rows[i].definition
-     rl.setPrompt(`${question} > `)
-     rl.prompt();
-   } else if (line !== `${answer}`) {
-      guess++
-      console.log(`wrong guess`);
-      if (guess === 3) {
-        console.log(`game over`);
-        rl.close()
-      }
-      rl.prompt()
-    } else {
-      rows.splice(i,1)
-      console.log('ur rigt');
-      if (rows.length === 0) {
-        console.log(`You win`);
-        rl.close()
-      }
-      question = rows[i].definition
-      rl.setPrompt(`${question} > `)
-      rl.prompt();
-    }
-  }).on('close',function(){
-      process.exit(0);
-  });
-})
-// control.model.getData()
-// console.log(control.model);
+let deckCard = process.argv[2]
+let control = new Controller(deckCard)
+control.run()
