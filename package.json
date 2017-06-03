@@ -1,0 +1,22 @@
+{
+  "name": "js-flashcards",
+  "version": "1.0.0",
+  "description": "faf",
+  "main": "flashcards.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/happy-fox-2017/js-flashcards.git"
+  },
+  "author": "fajar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/happy-fox-2017/js-flashcards/issues"
+  },
+  "homepage": "https://github.com/happy-fox-2017/js-flashcards#readme",
+  "dependencies": {
+    "sqlite3": "^3.1.8"
+  }
+}
