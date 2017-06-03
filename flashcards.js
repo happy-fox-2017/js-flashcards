@@ -20,50 +20,75 @@ class Controller {
     this.model = new Model()
     this.view = new View()
   }
-  
+
+
   start() {
-    db.serialize(function () {
+    return new Promise((resolve, reject) => {
       let query = `SELECT * FROM social`
       db.all(query, (error, rows) => {
-        if (error) {
+        if (!error) {
+          return resolve(rows)
         } else {
-          this.run(rows)
+          return reject(error)
         }
       })
     })
-    
   }
-  
-  run(data) {
-    console.log(data);
-    let question = data[0].definition
-    // rl.question(question, answer => {
-    //   if (answer == data[0]) {
-    //     data.splice(0,1)
-    //     console.log(`congrats ur right`);
-    //   } else {
-    //     console.log(`sorry you are wrong`);
-    //     data.push(data[0])
-    //     data.shift()
-    //     
-    //   }
-    // })
+
+  run() {
+
   }
-  
+
 }
 
 class View {
-  constructor() {
-    
-  }
-  
-  showQuestion() {
-    
+  constructor() {}
+
+  rules() {
+    console.log(`You can guess 3 times in one game, more than that.. game over`);
+    console.log(`If you can guess all cards, You win`);
+    console.log(`You can skip card you dont know`);
   }
 }
 
 let control = new Controller()
-let model = new Model()
-control.start()
+let model
+let i = 0
+let guess = 0
+control.start().then(rows => {
+  let question = rows[i].definition
+  rl.setPrompt(`${question} > `);
+  rl.prompt();
+  rl.on('line', function(line) {
+    let answer =  rows[i].term
+    if (line == 'skip') {
+     let skipQuestion = rows.shift()
+     rows.push(skipQuestion)
+     question = rows[i].definition
+     rl.setPrompt(`${question} > `)
+     rl.prompt();
+   } else if (line !== `${answer}`) {
+      guess++
+      console.log(`wrong guess`);
+      if (guess === 3) {
+        console.log(`game over`);
+        rl.close()
+      }
+      rl.prompt()
+    } else {
+      rows.splice(i,1)
+      console.log('ur rigt');
+      if (rows.length === 0) {
+        console.log(`You win`);
+        rl.close()
+      }
+      question = rows[i].definition
+      rl.setPrompt(`${question} > `)
+      rl.prompt();
+    }
+  }).on('close',function(){
+      process.exit(0);
+  });
+})
 // control.model.getData()
 // console.log(control.model);
