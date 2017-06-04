@@ -12,7 +12,7 @@ class FlashCardsView {
   }
 
   showFlashCard(flashCard) {
-    rl.question(flashCard.definition + '\n', (answer) => {
+    rl.question(`\nDefinition\n${flashCard.definition}\n\nGuess: `, (answer) => {
       flashCard.answer = answer;
       this._controller.onAnswer(flashCard);
     });
@@ -24,6 +24,14 @@ class FlashCardsView {
 
   static showError(message) {
     console.log('\x1b[31m', message);
+  }
+
+  showStatistic(flashCards, difficultFlashCards) {
+    const correctFlashCards = flashCards.filter(flashCard => flashCard.checkAnswer);
+    console.log(`
+      You answered: ${correctFlashCards.length}
+      Difficult cards : ${difficultFlashCards.length}
+      `);
   }
 
 }

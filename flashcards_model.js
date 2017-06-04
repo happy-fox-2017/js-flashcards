@@ -2,10 +2,19 @@ class FlashCard {
   constructor(definition, term) {
     this._definition = definition;
     this._term = term;
+    this._answer = null;
   }
 
   get definition() {
     return this._definition;
+  }
+
+  set answer(answer) {
+    this._answer = answer;
+  }
+
+  checkAnswer() {
+    return this._term.toUpperCase() === this._answer.toUpperCase();
   }
 }
 
