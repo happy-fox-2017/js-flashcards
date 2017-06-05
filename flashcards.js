@@ -31,11 +31,15 @@ class View {
   }
   
   gameOver() {
-    console.log(`Game Over!!! back to your mama!`);
+    console.log(`Game Over!!! go back to your mama!`);
   }
 
   wrong(wrongCount) {
-    console.log(`You've made ${wrongCount} mistakes. Better luck next time!`);
+    if(wrongCount == 2){
+      console.log('The Last Chance!');
+    }else {
+      console.log(`You've made ${wrongCount} mistakes. Better luck next time!`);
+    }
   }
 
   finish(remaining) {
@@ -63,8 +67,9 @@ class Controller {
   play(wrongCount = 0) {
     if (this.model.questions.length > 0){
       let term = readlineSync.question(`\n${this.model.questions[0].definition}\n`);
-
-      if (term == this.model.questions[0].term) {
+      let answer = this.model.questions[0].term;
+      
+      if (term == answer.toLowerCase()) {
         this.view.correct();
         this.model.questions.splice(0,1);
         return this.play(wrongCount);
@@ -86,7 +91,7 @@ class Controller {
       else {
         wrongCount += 1;
         this.view.wrong(wrongCount);
-      return this.play(wrongCount);
+        return this.play(wrongCount);
       }
     }
     else {
