@@ -26,12 +26,28 @@ class FlashCardsView {
     console.log('\x1b[31m', message);
   }
 
-  showStatistic(flashCards, difficultFlashCards) {
-    const correctFlashCards = flashCards.filter(flashCard => flashCard.checkAnswer);
+  showStatistic(flashCards) {
+    const correctFlashCards = flashCards.filter(flashCard => flashCard.isCorrect());
+    const difficultCardsCount = flashCards.length - correctFlashCards.length;
     console.log(`
       You answered: ${correctFlashCards.length}
-      Difficult cards : ${difficultFlashCards.length}
+      Difficult cards : ${difficultCardsCount}
       `);
+
+    if (difficultCardsCount > 0) {
+      rl.question(`
+        1. Replay Difficult Cards
+        2. Exit
+        `, (answer) => {
+        if (answer === '1') {
+          this._controller.replayDifficultCards();
+        } else {
+          rl.close();
+        }
+      });
+    } else {
+      rl.close();
+    }
   }
 
 }

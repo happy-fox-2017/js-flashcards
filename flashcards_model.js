@@ -13,7 +13,10 @@ class FlashCard {
     this._answer = answer;
   }
 
-  checkAnswer() {
+  isCorrect() {
+    if (this._answer === null) {
+      return false;
+    }
     return this._term.toUpperCase() === this._answer.toUpperCase();
   }
 }

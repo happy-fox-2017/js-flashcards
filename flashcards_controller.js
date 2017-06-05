@@ -12,7 +12,6 @@ class FlashCardsController {
     this.flashCardsDataService = new FlashCardsDataService(db);
     this.flashCardsView = new FlashCardsView(this);
     this.flashCards = [];
-    this.difficultFlashCards = [];
     this.currentFlashCardIndex = 0;
     this.guessCount = 0;
   }
@@ -29,7 +28,7 @@ class FlashCardsController {
   }
 
   onAnswer(flashCard) {
-    const isCorrect = flashCard.checkAnswer();
+    const isCorrect = flashCard.isCorrect();
     if (isCorrect) {
       this.showNexFlashCard();
     } else {
@@ -37,7 +36,6 @@ class FlashCardsController {
       if (this.guessCount >= GUESS_LIMIT) {
         this.guessCount = 0;
         this.showNexFlashCard();
-        this.difficultFlashCards.push(flashCard);
       } else {
         this.showFlashCard();
       }
@@ -45,12 +43,24 @@ class FlashCardsController {
   }
 
   showNexFlashCard() {
-    this.currentFlashCardIndex += 1;
+    do {
+      this.currentFlashCardIndex += 1;
+    } while (
+      this.currentFlashCardIndex < this.flashCards.length &&
+      this.flashCards[this.currentFlashCardIndex].isCorrect()
+    );
+
     if (this.currentFlashCardIndex >= this.flashCards.length) {
-      this.flashCardsView.showStatistic(this.flashCards, this.difficultFlashCards);
+      this.flashCardsView.showStatistic(this.flashCards);
     } else {
       this.showFlashCard();
     }
+  }
+
+  replayDifficultCards() {
+    this.currentFlashCardIndex = -1;
+    this.guessCount = 0;
+    this.showNexFlashCard();
   }
 
 }
