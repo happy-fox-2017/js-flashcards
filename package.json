@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/happy-fox-2017/js-flashcards#readme",
   "dependencies": {
+    "readline-sync": "^1.4.7",
+    "sqlite-sync": "^0.3.6",
     "sqlite3": "^3.1.8"
   }
 }
