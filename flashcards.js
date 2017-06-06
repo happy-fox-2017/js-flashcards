@@ -6,7 +6,7 @@ const readlineSync = require('readline-sync');
 
 
 class Model {
-  constructor (category='social') {
+  constructor (category) {
     this.cat = category;
     this.questions = sqlite.run(`SELECT * FROM ${this.cat}`);
   }
@@ -52,12 +52,23 @@ class View {
       return console.log(`Thank you for playing!`);
     }
   }
+
+  lost() {
+    console.log('You already make 5 mistakes, that means\nYou Lose!');
+    this.printLine()
+    console.log('Thank you for playing');
+  }
 }
 
 class Controller {
   constructor(option) {
     this.model = new Model(option);
     this.view = new View();
+    if (!this.model.questions) {
+      console.log(`There is no such category ${option}` )
+    } else {
+      this.welcome()
+    }
   }
 
   welcome(){
@@ -88,8 +99,12 @@ class Controller {
 
       else {
         count += 1;
-        this.view.wrong(count);
-      return this.play(count);
+        if (count >= 5) {
+          this.view.lost()
+        } else {
+          this.view.wrong(count);
+          return this.play(count);
+        }
       }
     }
     else {
@@ -101,4 +116,3 @@ class Controller {
 
 let option = process.argv[2];
 let flashCard = new Controller(option);
-flashCard.welcome();
