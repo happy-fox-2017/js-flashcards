@@ -1,116 +1,133 @@
 "use strict"
 // write your code here
 
-var sqlite3 = require('sqlite3').verbose();
-var sqlite = require('sqlite-sync');
-var readlineSync = require('readline-sync')
-var db = new sqlite3.Database('./cards.db');
+const sqlite3 = require('sqlite3').verbose()
+const db = new sqlite3.Database('./cards.db')
+const readline = require('readline')
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+})
 
-
-class FlashCard {
-  constructor(input) {
-    this.data = this.populate(input);
+class Model {
+  constructor(deck=`social`) {
+    this.deck = deck
   }
 
-  populate(input) {
-    if(input == undefined) input = "social"
-    sqlite.connect('cards.db');
-    let rows = sqlite.run(`SELECT * FROM ${input}`)
-    //Stored
-    return rows;
-  }
-
-  skipped(index) {
-    let swapped = this.data[index];
-    this.data.splice(index, 1);
-    this.data.push(swapped);
-  }
-
-  correct(index) {
-    this.data.splice(index, 1);
+  getData() {
+    return new Promise((resolve, reject) => {
+      let query = `SELECT * FROM ${this.deck}`
+      db.all(query, (error, rows) => {
+        if (!error) {
+          return resolve(rows)
+        } else {
+          return reject(error)
+        }
+      })
+    })
   }
 }
 
-class Execute {
-  constructor() {
-    this.argv = process.argv;
-    let option = this.argv[2];
-    this.model = new FlashCard(option);
-    this.view = new Display();
-    this.data = this.model.data;
-    this.welcomeScreen(option);
+class Controller {
+  constructor(deck='social') {
+    this.deck = deck
   }
 
-  welcomeScreen(option) {
-    this.view.welcomeScreen(option);
-    this.interface();
+  run() {
+    let deck = this.deck
+    let view = new View()
+    let model = new Model(deck)
+    model.getData().then(questions => {
+      view.rules()
+      let order = 0
+      let guess = 0
+      let question = questions[order].definition
+
+      rl.setPrompt(`${question} > `);rl.prompt();
+      rl.on('line', (input) => {
+        input = input.toLowerCase().trim()
+        let answer =  questions[order].term.toLowerCase().trim()
+        if (input == 'skip') {
+          view.skip()
+          let skipQuestion = questions.shift()
+          questions.push(skipQuestion)
+          question = questions[order].definition
+          rl.setPrompt(`${question} > `)
+          rl.prompt();
+        } else if (input !== `${answer}`) {
+          guess++
+          view.wrongAnswer(guess)
+          if (guess === 3) {
+            view.gameOver()
+            rl.close()
+          }
+          rl.prompt()
+        } else {
+          questions.splice(order,1)
+          view.rightAnswer()
+          if (questions.length === 0) {
+            view.win()
+            rl.close()
+          }
+          question = questions[order].definition
+          rl.setPrompt(`${question} > `)
+          rl.prompt();
+        }
+      }).on('close',function(){
+          process.exit(0);
+      });
+    })
   }
 
-  interface(number = 0, wrong = 0) {
-    if(this.data.length >= 1) {
-      let answer = readlineSync.question(`\n${this.data[number].definition}:\n`)
-      answer = answer.toLowerCase();
-      let solution = this.data[number].term.toString().toLowerCase();
-      
-      if(answer == solution) {
-        this.model.correct(number);
-        if(this.data.length > 0) this.view.correct(this.data.length);
-        return this.interface(number);
-      } else if(answer == "skip") {
-        this.model.skipped(number);
-        this.interface(number);
-      } else if(answer == "exit") {
-        process.exit();
-      }else {
-        wrong++;
-        this.view.wrong(wrong);
-        return this.interface(number, wrong);
-      }
-    } else {
-      this.view.win();
-    }
-  }
 }
 
-class Display {
+class View {
   constructor() {}
 
-  welcomeScreen(option) {
-    if(option == undefined) option = "social";
-    console.log(`Welcome to the game, you have chosen "${option}" questions!`)
-    console.log(`\nTo play just enter the correct term for each definition. Ready? Go!`)
+  rules() {
+    console.log('🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰');
+    console.log('                Let us play a game, shall we?'              );
+    console.log('Answer all questions, you win. Otherwise, 3 mistakes, over!');
+    console.log('                     Stuck? Try to skip'                    );
+    console.log('🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰🀰');
+
+  }
+  rightAnswer() {
+    console.log(`✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩`);
+    console.log(`Atta boy! You correct! `);
+    console.log(`✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩✩`);
   }
 
-  correct(number) {
-    console.log(`Jawaban anda benar! Tersisa ${number} pertanyaan lagi`)
+  wrongAnswer(guess) {
+    console.log(`✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎`);
+    console.log(`Not quite sure, mate. You got it wrong!`);
+    console.log(`${3-guess} chances to go, mate         `);
+    console.log(`✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎✖︎`);
   }
-  wrong(number) {
-    console.log(`Jawaban anda salah, anda sudah salah ${number} kali`)
+  skip() {
+    console.log(`◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎`);
+    console.log(`See you again`);
+    console.log(`Skip to the next question, shall we?`);
+    console.log(`◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎◻︎`);
   }
-
   win() {
-    console.log(`\nCongratulations! You've aced this game!`)
+    console.log('﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆');
+    console.log('﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅');
+    console.log('           Man, you are awesome!☻         ');
+    console.log('                 YOU WON!                 ');
+    console.log('﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆﹆');
+    console.log('﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅﹅');
+  }
+  gameOver() {
+    console.log('⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇');
+    console.log('⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉');
+    console.log('               No good, mate              ');
+    console.log('                 YOU LOSE!                ');
+    console.log('⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉⚉');
+    console.log('⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇⚇');
   }
 }
 
-let play = new Execute()
-
-
-
-
-//Archive Storage
-
-// db.all(`SELECT * FROM ${input}`, (err, rows) => {
-//   try {
-//     let data = [];
-//     for(let i = 0; i < rows.length; i++) {
-//       data.push(rows[i]);
-//     }
-//     return data;
-//   } catch(err) {
-//     console.log(error)
-//   }
-// });
-// db.close(error => {
-//   if(error) throw error;
-// })
+let deckCard = process.argv[2]
+let control = new Controller(deckCard)
+control.run()
