@@ -1,12 +1,13 @@
 var sqlite = require('sqlite-sync');
 sqlite.connect('./cards.db');
 
+
 const readlineSync = require('readline-sync');
 
 class Model {
-  constructor (category='social') {
+  constructor (category) {
     this.cat = category;
-    this.questions = sqlite.run(`SELECT * FROM ${this.cat}`);
+    this.questions = sqlite.all(`SELECT * FROM ${this.cat}`);
   }
 
   skip(question){
@@ -35,7 +36,7 @@ class View {
   }
 
   wrong(wrongCount) {
-    if(wrongCount == 2){
+    if(wrongCount == 3){
       console.log('The Last Chance!');
     }else {
       console.log(`You've made ${wrongCount} mistakes. Better luck next time!`);
@@ -80,7 +81,7 @@ class Controller {
         return this.play(wrongCount);
       }
       
-      else if (wrongCount > 1) {
+      else if (wrongCount === 2) {
         this.view.gameOver();
       }
 
