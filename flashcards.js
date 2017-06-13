@@ -12,9 +12,11 @@ class Model {
   }
 
   populate(input) {
-    if(input == undefined) input = "social"
+    if(input == undefined) {
+      input = "social"
+    }
     sqlite.connect('cards.db');
-    let rows = sqlite.run(`SELECT * FROM ${input}`)
+    let rows = sqlite.run(`SELECT * FROM ${input}`);
     return rows;
   }
 
@@ -36,6 +38,7 @@ class Controller {
     this.model = new Model(option);
     this.view = new View();
     this.data = this.model.data;
+    this.wrongAnswer = 0;
     this.welcomeScreen(option);
   }
 
@@ -43,8 +46,8 @@ class Controller {
     this.view.welcomeScreen(option);
     this.interface();
   }
-
-  interface(number = 0, wrong = 0) {
+  
+  interface(number = 0) {
     if(this.data.length >= 1) {
       let answer = readlineSync.question(`\n${this.data[number].definition}:\n`)
       answer = answer.toLowerCase();
@@ -52,7 +55,9 @@ class Controller {
       
       if(answer == solution) {
         this.model.correct(number);
-        if(this.data.length > 0) this.view.correct(this.data.length);
+        if(this.data.length > 0) {
+          this.view.correct(this.data.length);
+        }
         return this.interface(number);
       } else if(answer == "skip") {
         this.model.skipped(number);
@@ -60,9 +65,9 @@ class Controller {
       } else if(answer == "exit") {
         process.exit();
       }else {
-        wrong++;
-        this.view.wrong(wrong);
-        return this.interface(number, wrong);
+        this.wrongAnswer++;
+        this.view.wrong(this.wrongAnswer);
+        return this.interface(number);
       }
     } else {
       this.view.win();
@@ -71,7 +76,9 @@ class Controller {
 }
 
 class View {
-  constructor() {}
+  constructor() {
+    
+  }
 
   welcomeScreen(option) {
     if(option == undefined) 
